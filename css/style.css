@@ -94,14 +94,32 @@
 }
 
 .task {
+    position: relative;
     background: #0f3460;
     color: #fff;
-    padding: 15px;
+    padding: 15px 15px 15px 10px;
     margin: 15px 0;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     cursor: grab;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+    border-left: 5px solid;
+}
+
+.task.pending {
+    border-color: #ff9800;
+}
+.task.in-progress {
+    border-color: #2196F3;
+}
+.task.testing {
+    border-color: #FFC107;
+}
+.task.completed {
+    border-color: #2ecc71;
+}
+.task.overdue {
+    border-color: #E53935;
 }
 
 .task:active {
@@ -170,5 +188,20 @@ input::placeholder {
 .dragging {
     opacity: 0.6;
     transform: scale(1.05);
+}
+
+.task-transition-move {
+    transition: all 0.5s ease-in-out;
+}
+.task-transition-enter-active, .task-transition-leave-active {
+    transition: all 0.3s ease;
+}
+.task-transition-enter {
+    transform: scale(0.8);
+    opacity: 0;
+}
+.task-transition-leave-to {
+    transform: scale(1.2);
+    opacity: 0;
 }
 

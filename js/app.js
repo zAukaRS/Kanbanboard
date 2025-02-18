@@ -8,13 +8,44 @@ new Vue({
                 {title: 'Тестирование', tasks: []},
                 {title: 'Выполненные задачи', tasks: []}
             ],
-            newTask: {title: '', description: '', deadline: ''}
+            newTask: {title: '', description: '', deadline: ''},
+            showCalendar: false,
         };
     },
     created() {
         this.loadTasks();
+        this.initCalendar();
     },
     methods: {
+        toggleCalendar() {
+            this.showCalendar = !this.showCalendar;
+
+            if (this.showCalendar) {
+                this.$nextTick(() => {
+                    this.initCalendar();
+                });
+            }
+        },
+        initCalendar() {
+            setTimeout(() => {
+                let calendarEl = document.getElementById('calendar');
+                let calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    events: this.getCalendarEvents()
+                });
+                calendar.render();
+            }, 500);
+        },
+
+        getCalendarEvents() {
+            return this.columns.flatMap(column =>
+                column.tasks.map(task => ({
+                    title: task.title,
+                    start: task.deadline,
+                    color: column.title === "Выполненные задачи" ? "#4CAF50" : "#FF9800"
+                }))
+            );
+        },
         addTask() {
             if (this.newTask.title && this.newTask.description && this.newTask.deadline) {
                 this.columns[0].tasks.push({
