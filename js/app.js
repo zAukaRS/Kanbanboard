@@ -11,6 +11,9 @@ new Vue({
             newTask: {title: '', description: '', deadline: ''}
         };
     },
+    created() {
+        this.loadTasks();
+    },
     methods: {
         addTask() {
             if (this.newTask.title && this.newTask.description && this.newTask.deadline) {
@@ -21,16 +24,19 @@ new Vue({
                     status: 'pending'
                 });
                 this.newTask = { title: '', description: '', deadline: '' };
+                this.saveTasks();
             }
         },
         editTask(task) {
             if (this.columns[3].tasks.includes(task)) return;
             task.lastEdited = new Date();
+            this.saveTasks();
         },
         deleteTask(task, columnIndex) {
             const index = this.columns[columnIndex].tasks.indexOf(task);
             if (index > -1) {
                 this.columns[columnIndex].tasks.splice(index, 1);
+                this.saveTasks();
             }
         },
         moveTask(task, fromColumn, toColumn) {
@@ -45,6 +51,7 @@ new Vue({
                     task.status = now > deadline ? 'overdue' : 'completed';
                 }
                 this.columns[toColumn].tasks.push(task);
+                this.saveTasks();
             }
         },
         returnTask(task, fromColumn) {
@@ -55,6 +62,7 @@ new Vue({
                     this.columns[fromColumn].tasks.splice(index, 1);
                     this.columns[1].tasks.push(task);
                     this.returnReason = '';
+                    this.saveTasks();
                 }
             } else {
                 alert('Укажите причину возврата!');
@@ -97,6 +105,16 @@ new Vue({
                 movedTask.status = now > deadline ? 'overdue' : 'completed';
             }
             this.columns[toColumn].tasks.push(movedTask);
+            this.saveTasks();
+        },
+        saveTasks() {
+            localStorage.setItem('kanbanTasks', JSON.stringify(this.columns));
+        },
+        loadTasks() {
+            const savedTasks = localStorage.getItem('kanbanTasks');
+            if (savedTasks) {
+                this.columns = JSON.parse(savedTasks);
+            }
         }
     }
 });
