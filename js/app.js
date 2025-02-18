@@ -36,7 +36,27 @@ new Vue({
             if (index > -1) {
                 this.columns[fromColumn].tasks.splice(index, 1);
                 this.columns[toColumn].tasks.push({ ...task, lastEdited: new Date() });
+                if (toColumn === 3) {
+                    const now = new Date();
+                    const deadline = new Date(task.deadline);
+                    task.status = now > deadline ? 'overdue' : 'completed';
+                }
+                this.columns[toColumn].tasks.push(task);
             }
-        }
+        },
+        returnTask(task, fromColumn) {
+            if (this.returnReason.trim()) {
+                const index = this.columns[fromColumn].tasks.indexOf(task);
+                if (index > -1) {
+                    task.returnReason = this.returnReason;
+                    this.columns[fromColumn].tasks.splice(index, 1);
+                    this.columns[1].tasks.push(task);
+                    this.returnReason = '';
+                }
+            } else {
+                alert('Укажите причину возврата!');
+            }
+        },
+
     }
 });
