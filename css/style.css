@@ -69,12 +69,18 @@
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease-in-out;
+    min-height: 300px;
 }
 
 .column:hover {
-    transform: scale(1.03);
+    transform: scale(1.02);
+}
+
+.column.dragover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.5);
 }
 
 .column h3 {
@@ -93,14 +99,19 @@
     padding: 15px;
     margin: 15px 0;
     border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     cursor: grab;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s;
 }
 
-.task:hover {
-    transform: scale(1.02);
-    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4);
+.task:active {
+    cursor: grabbing;
+}
+
+.task.dragging {
+    opacity: 0.5;
+    transform: scale(1.1);
+    box-shadow: 0px 6px 15px rgba(255, 255, 255, 0.4);
 }
 
 button {
