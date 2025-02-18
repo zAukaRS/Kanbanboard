@@ -11,7 +11,29 @@
 </head>
 <body>
 <div id="app">
-
+    <h2>Kanban Board</h2>
+    <div>
+        <input v-model="newTask.title" placeholder="Название задачи">
+        <input v-model="newTask.description" placeholder="Описание">
+        <input type="date" v-model="newTask.deadline">
+        <button @click="addTask">Добавить задачу</button>
+    </div>
+    <div class="board">
+        <div class="column" v-for="(column, colIndex) in columns" :key="colIndex">
+            <h3>{{ column.title }}</h3>
+            <div class="task" v-for="task in column.tasks" :key="task.createdAt">
+                <h4>{{ task.title }}</h4>
+                <p>{{ task.description }}</p>
+                <p>Дэдлайн: {{ task.deadline }}</p>
+                <p>Создано: {{ new Date(task.createdAt).toLocaleString() }}</p>
+                <p>Изменено: {{ new Date(task.lastEdited).toLocaleString() }}</p>
+                <button @click="editTask(task)">Редактировать</button>
+                <button @click="deleteTask(task, colIndex)">Удалить</button>
+                <button v-if="colIndex < columns.length - 1" @click="moveTask(task, colIndex, colIndex + 1)">Далее</button>
+                <button v-if="colIndex > 0" @click="moveTask(task, colIndex, colIndex - 1)">Назад</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>
