@@ -13,50 +13,9 @@
 </head>
 <body>
 <div id="app">
-    <div class="header">
-        <h2>Kanban Board</h2>
-        <button @click="toggleCalendar">📅 Открыть/Закрыть Календарь</button>
-        <div v-if="showCalendar" id="calendar"></div>
-        <div class="task-form">
-            <input v-model="newTask.title" placeholder="🔖 Название задачи">
-            <input v-model="newTask.description" placeholder="📝 Описание">
-            <input type="date" v-model="newTask.deadline">
-            <button @click="addTask">Добавить</button>
-        </div>
-    </div>
-    <div class="board">
-        <div class="column" v-for="(column, colIndex) in columns" :key="colIndex"
-            @dragover="dragOver"
-            @dragenter="dragOver"
-            @dragleave="dragLeave"
-            @drop="drop($event, colIndex)">
-            <h3>{{ column.title }}</h3>
-            <transition-group name="task-transition" tag="div">
-                <div class="task" v-for="task in column.tasks" :key="task.createdAt" draggable="true"
-                    :class="{'pending': colIndex === 0, 'in-progress': colIndex === 1, 'testing': colIndex === 2, 'completed': task.status === 'completed', 'overdue': task.status === 'overdue'}"
-                    @dragstart="colIndex !== 3 && dragStart($event, task, colIndex)"
-                    @dragend="$event.target.classList.remove('dragging')">
-                    <h4>{{ task.title }}</h4>
-                    <p>{{ task.description }}</p>
-                    <p>Дэдлайн: {{ task.deadline }}</p>
-                    <p>Создано: {{ new Date(task.createdAt).toLocaleString() }}</p>
-                    <p>Изменено: {{ new Date(task.lastEdited).toLocaleString() }}</p>
-                    <p v-if="colIndex === 3" :class="{ overdue: task.status === 'overdue', completed: task.status === 'completed' }">
-                        {{ task.status === 'overdue' ? 'Просрочено' : 'Выполнено в срок' }}
-                    </p>
-                    <button v-if="colIndex !== 3" @click="editTask(task)">Редактировать</button>
-                    <button @click="deleteTask(task, colIndex)">Удалить</button>
-                    <button v-if="colIndex < columns.length - 1" @click="moveTask(task, colIndex, colIndex + 1)">Далее</button>
-                    <button v-if="colIndex !== 3" @click="moveTask(task, colIndex, colIndex - 1)">Назад</button>
-                    <div v-if="colIndex === 2">
-                        <input v-model="returnReason" placeholder="Причина возврата">
-                        <button @click="returnTask(task, colIndex)">Вернуть</button>
-                    </div>
-                </div>
-            </transition-group>
-        </div>
-    </div>
+
 </div>
+
 
 </body>
 </html>

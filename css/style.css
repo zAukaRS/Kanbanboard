@@ -115,11 +115,14 @@
 .task.testing {
     border-color: #FFC107;
 }
-.task.completed {
-    border-color: #2ecc71;
-}
 .task.overdue {
-    border-color: #E53935;
+    background-color: #ffcccc;
+    border-left: 5px solid #ff0000;
+}
+
+.task.completed {
+    background-color: #368d36;
+    border-left: 5px solid #00cc00;
 }
 
 .task:active {
