@@ -175,7 +175,7 @@ button:hover {
 }
 
 input {
-    width: 100%;
+    width: 350px;
     padding: 10px;
     border: none;
     border-radius: 5px;
@@ -206,5 +206,39 @@ input::placeholder {
 .task-transition-leave-to {
     transform: scale(1.2);
     opacity: 0;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+}
+
+.modal-content ul {
+    padding: 0;
+    list-style: none;
+}
+
+.modal-content ul li {
+    padding: 5px 0;
 }
 

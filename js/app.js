@@ -2,7 +2,12 @@ Vue.component('task-item', {
     props: ['task', 'colIndex', 'columnsLength'],
     data() {
         return {
-            returnReason: ''
+            returnReason: '',
+            showReturnHistory: false,
+            showSubtaskForm: false,
+            isEditing: false,
+            newSubtask: { title: '', description: '', createdAt: '', lastEdited: '' },
+            editedTask: { title: '', description: '', deadline: '' }
         };
     },
     computed: {
@@ -22,16 +27,83 @@ Vue.component('task-item', {
                 return deadlineDate < now ? 'Просрочено' : 'Выполнено в срок';
             }
             return '';
-        }
+        },
+        allSubtasksCompleted() {
+            return this.task.subtasks && this.task.subtasks.length > 0
+                ? this.task.subtasks.every(subtask => subtask.completed)
+                : true;
+        },
+        canEdit() {
+            return this.colIndex < this.columnsLength - 1;
+        },
+        canEditSubtask() {
+            return this.colIndex === 0;
+        },
+        canMoveTask() {
+            return !this.task.subtasks || this.task.subtasks.every(sub => sub.completed);
+        },
     },
     methods: {
+        toggleEdit() {
+            if (!this.isEditing) {
+                this.editedTask = { ...this.task };
+            }
+            this.isEditing = !this.isEditing;
+        },
+        completeSubtask(index) {
+            if (!this.task.subtasks[index].completed) {
+                this.$set(this.task.subtasks, index, {
+                    ...this.task.subtasks[index],
+                    completed: true
+                });
+            }
+        },
+        saveEdit() {
+            this.task.title = this.editedTask.title;
+            this.task.description = this.editedTask.description;
+            this.task.deadline = this.editedTask.deadline;
+            this.task.lastEdited = Date.now().toString();
+            this.$emit('update-task', this.task);
+            this.isEditing = false;
+        },
+        addSubtask() {
+            if (!this.newSubtask.title || !this.newSubtask.description) return;
+            this.task.subtasks = this.task.subtasks || [];
+            this.task.subtasks.push({
+                ...this.newSubtask,
+                createdAt: Date.now().toString(),
+                lastEdited: Date.now().toString(),
+                completed: false
+            });
+            this.newSubtask = { title: '', description: '', createdAt: '', lastEdited: '' };
+            this.showSubtaskForm = false;
+            this.$emit('update-task', this.task);
+        },
+        toggleSubtaskForm() {
+            this.showSubtaskForm = !this.showSubtaskForm;
+        },
+        moveTask() {
+            if (!this.allSubtasksCompleted) return;
+            this.$emit('move-task', this.task, this.colIndex, this.colIndex + 1);
+        },
+        toggleSubtaskCompletion(subtask) {
+            if (!subtask.completed) {
+                subtask.completed = true;
+                subtask.lastEdited = Date.now().toString();
+                this.$emit('update-task', this.task);
+                this.$forceUpdate();
+            }
+        },
         formattedDate(timestamp) {
             return timestamp ? new Date(Number(timestamp)).toLocaleString() : 'Нет данных';
         },
         dragStart(event) {
+            if (!this.allSubtasksCompleted) {
+                event.preventDefault();
+                return;
+            }
             event.dataTransfer.setData('taskId', this.task.createdAt);
             event.dataTransfer.setData('fromColumn', this.colIndex);
-            event.target.classList.add('dragging');
         },
         editTask() {
             if (this.colIndex === this.columnsLength - 1) return;
@@ -47,30 +119,63 @@ Vue.component('task-item', {
             }
             this.task.lastEdited = Date.now().toString();
             this.$emit('update-task', this.task);
-        }
+        },
+        returnTask() {
+            if (!this.returnReason) {
+                alert('Укажите причину возврата');
+                return;
+            }
+            this.$emit('return-task', this.task, this.colIndex, this.returnReason);
+            this.returnReason = '';
+        },
     },
     template: `
-        <div class="task" :class="taskClasses" draggable="true"
-            @dragstart="dragStart"
-            @dragend="$event.target.classList.remove('dragging')"
-            @dragover.prevent>
-            <h4>{{ task.title }}</h4>
-            <p>{{ task.description }}</p>
-            <p>Дэдлайн: {{ task.deadline }}</p>
-            <p>Создано: {{ formattedDate(task.createdAt) }}</p>
-            <p>Изменено: {{ formattedDate(task.lastEdited) }}</p>
-            <p v-if="colIndex === columnsLength - 1" :class="{ overdue: deadlineStatus === 'Просрочено', completed: deadlineStatus === 'Выполнено в срок' }">
-                {{ deadlineStatus }}
-            </p>
-            <button v-if="colIndex < columnsLength - 1" @click="editTask">Редактировать</button>
-            <button @click="$emit('delete-task', task, colIndex)">Удалить</button>
-            <button v-if="colIndex < columnsLength - 1" @click="$emit('move-task', task, colIndex, colIndex + 1)">Далее</button>
-            <div v-if="colIndex === 2">
-                <input v-model="returnReason" placeholder="Причина возврата">
-                <button @click="$emit('return-task', task, colIndex, returnReason)">Вернуть</button>
-            </div>
+    <div class="task" :class="taskClasses" draggable="true"
+        @dragstart="dragStart"
+        @dragend="$event.target.classList.remove('dragging')"
+        @dragover.prevent>
+        <p v-if="!isEditing">{{ task.title }}</p>
+        <input v-if="isEditing" v-model="task.title">
+        <p v-if="!isEditing">{{ task.description }}</p>
+        <textarea v-if="isEditing" v-model="task.description"></textarea>
+        <p v-if="!isEditing"> Дэдлайн: {{ task.deadline }}</p>
+        <input v-if="isEditing" type="date" v-model="editedTask.deadline">
+        <p>Создано: {{ formattedDate(task.createdAt) }}</p>
+        <p>Изменено: {{ formattedDate(task.lastEdited) }}</p>
+        <button v-if="colIndex < columnsLength - 1 && canEdit" @click="isEditing ? saveEdit() : toggleEdit()">
+            {{ isEditing ? 'Сохранить' : 'Редактировать' }}
+        </button>
+        <button v-if="colIndex === 0" @click="toggleSubtaskForm">Добавить подзадачу</button>
+        <div v-if="showSubtaskForm">
+            <input v-model="newSubtask.title" placeholder="Название">
+            <textarea v-model="newSubtask.description" placeholder="Описание"></textarea>
+            <button @click="addSubtask">Сохранить подзадачу</button>
         </div>
-    `
+        <ul v-if="task.subtasks">
+            <li v-for="subtask in task.subtasks" :key="subtask.createdAt">
+                <p>{{ subtask.title }}</p>
+                <p>{{ subtask.description }}</p>
+                <input type="checkbox" v-model="subtask.completed" 
+                   @change="toggleSubtaskCompletion(subtask)" 
+                   :disabled="subtask.completed">
+            </li>
+        </ul>
+        <button @click="$emit('delete-task', task, colIndex)">Удалить</button>
+        <button v-if="colIndex < columnsLength - 1" @click="moveTask" :disabled="!allSubtasksCompleted">Далее</button>
+        <div v-if="colIndex === 2">
+            <input v-model="returnReason" placeholder="Причина возврата">
+            <button @click="returnTask">Вернуть</button>
+        </div>
+        <button v-if="task.returnHistory && task.returnHistory.length" @click="showReturnHistory = !showReturnHistory">
+            История возвратов
+        </button>
+        <ul v-if="showReturnHistory">
+            <li v-for="entry in task.returnHistory" :key="entry.timestamp">
+                {{ formattedDate(entry.timestamp) }} - {{ entry.reason }}
+            </li>
+        </ul>
+    </div>
+`
 });
 
 
@@ -92,10 +197,13 @@ Vue.component('task-column', {
         dropTask(event) {
             const taskId = event.dataTransfer.getData('taskId');
             const fromColumn = Number(event.dataTransfer.getData('fromColumn'));
-            if (fromColumn === this.columnsLength - 1) return;
-            if (Math.abs(fromColumn - this.index) !== 1 || this.isRestrictedMovement(fromColumn, this.index)) return;
+            if (fromColumn === this.index) return;
             const task = this.$root.columns[fromColumn].tasks.find(t => t.createdAt === taskId);
             if (!task) return;
+            if (task.subtasks && !task.subtasks.every(subtask => subtask.completed)) {
+                console.log("Перемещение запрещено! Не все подзадачи выполнены.");
+                return;
+            }
             this.$emit('move-task', task, fromColumn, this.index);
         },
         isRestrictedMovement(fromColumn, toColumn) {
@@ -219,11 +327,9 @@ new Vue({
             this.updateCalendar();
         },
         returnTask(task, colIndex, reason) {
-            if (!reason) {
-                alert('Укажите причину возврата');
-                return;
-            }
-            this.columns[1].tasks.push({ ...task, lastEdited: Date.now().toString(), returnReason: reason });
+            if (!task.returnHistory) task.returnHistory = [];
+            task.returnHistory.push({ reason, timestamp: Date.now().toString() });
+            this.columns[1].tasks.push({ ...task, lastEdited: Date.now().toString() });
             this.columns[colIndex].tasks = this.columns[colIndex].tasks.filter(t => t !== task);
             this.saveTasks();
         },
@@ -255,10 +361,16 @@ new Vue({
             </div>
         </div>
         <div class="board">
-            <task-column v-for="(column, index) in columns" :key="index"
-                :column="column" :index="index" :columnsLength="columns.length"
-                @edit-task="editTask" @delete-task="deleteTask"
-                @move-task="moveTask" @return-task="returnTask">
+            <task-column
+                 v-for="(column, index) in columns" 
+                :key="column.title" 
+                :column="column" 
+                :index="index" 
+                :columnsLength="columns.length"
+                @edit-task="editTask" 
+                @delete-task="deleteTask" 
+                @move-task="moveTask" 
+                @return-task="returnTask">
             </task-column>
         </div>
     </div>
